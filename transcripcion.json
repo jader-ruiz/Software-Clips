@@ -1,0 +1,22 @@
+[
+    {
+        "inicio": 0.0,
+        "fin": 4.0,
+        "texto": "Alright so here we are one of the elephants."
+    },
+    {
+        "inicio": 4.0,
+        "fin": 12.0,
+        "texto": "The cool thing about these guys is that they have really, really, really long hunts."
+    },
+    {
+        "inicio": 12.0,
+        "fin": 14.0,
+        "texto": "And that's cool."
+    },
+    {
+        "inicio": 14.0,
+        "fin": 19.0,
+        "texto": "And that's pretty much all there is to say."
+    }
+]
