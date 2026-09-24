@@ -26,14 +26,19 @@ class AnalizadorClips:
         Eres un experto productor de video viral. Te daré una transcripción en formato JSON. 
         Cada segmento tiene un 'inicio', un 'fin' y un 'texto'.
         
-        Tu tarea es identificar el fragmento más interesante y continuo de esta transcripción. 
+        Tu tarea es identificar los 3 a 5 momentos más interesantes, polémicos, graciosos o de mayor valor educativo de esta transcripción. Cada momento debe durar entre 15 y 60 segundos.
         
-        Devuélveme ÚNICAMENTE un objeto JSON válido con la siguiente estructura, sin texto extra, sin explicaciones, solo el JSON puro:
+        Devuélveme ÚNICAMENTE un arreglo JSON válido con múltiples objetos. Usa esta estructura estricta, sin texto extra:
         [
             {{
-                "titulo": "Un título atractivo para el clip",
-                "inicio": el_tiempo_de_inicio_en_segundos,
-                "fin": el_tiempo_de_fin_en_segundos
+                "titulo": "Un título atractivo para el clip 1",
+                "inicio": tiempo_inicio_1,
+                "fin": tiempo_fin_1
+            }},
+            {{
+                "titulo": "Un título atractivo para el clip 2",
+                "inicio": tiempo_inicio_2,
+                "fin": tiempo_fin_2
             }}
         ]
         

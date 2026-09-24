@@ -1,50 +1,84 @@
 import whisper
 import json
 import os
+import subprocess
+import imageio_ffmpeg
+import numpy as np
+import soundfile as sf
 
 class TranscriptorVideo:
     def __init__(self, modelo_tamano="base"):
-        """
-        Inicializa el modelo de IA. 
-        'base' es rápido y ligero. Si tienes buena PC, luego puedes probar 'small' o 'medium'.
-        """
-        print(f"Cargando modelo de Whisper '{modelo_tamano}'... (La primera vez descargará el modelo, ten paciencia)")
+        print(f"Cargando modelo de Whisper '{modelo_tamano}'...")
         self.modelo = whisper.load_model(modelo_tamano)
+        self.ruta_ffmpeg = imageio_ffmpeg.get_ffmpeg_exe()
         print("¡Modelo de IA cargado en memoria!")
 
-    def transcribir(self, ruta_video, ruta_salida_json="transcripcion.json"):
-        """
-        Analiza el audio del video y extrae el texto junto con los tiempos exactos.
-        """
-        print(f"Empezando a escuchar y transcribir: {ruta_video}")
+    def _extraer_audio(self, ruta_video, ruta_audio_temporal="temp_audio.wav"):
+        """Usa nuestro FFmpeg interno para extraer el audio en formato WAV (16kHz)"""
+        print("Extrayendo audio para Whisper...")
+        comando = [
+            self.ruta_ffmpeg,
+            "-y", 
+            "-i", ruta_video,
+            "-vn", 
+            "-acodec", "pcm_s16le", 
+            "-ar", "16000", 
+            "-ac", "1", 
+            ruta_audio_temporal
+        ]
+        try:
+            subprocess.run(comando, check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+            return ruta_audio_temporal
+        except subprocess.CalledProcessError:
+            print("Error extrayendo audio con FFmpeg.")
+            return None
+
+    def transcribir(self, ruta_video, ruta_salida_json="transcripcion_actual.json"):
+        print(f"Empezando proceso de transcripción de: {ruta_video}")
         
-        # Whisper hace la magia aquí. Extrae el audio del video automáticamente y lo transcribe.
-        resultado = self.modelo.transcribe(ruta_video)
+        ruta_audio = self._extraer_audio(ruta_video)
         
-        segmentos = []
-        # resultado['segments'] contiene la lista de frases con su segundo de inicio y fin
-        for segmento in resultado['segments']:
-            segmentos.append({
-                "inicio": segmento['start'],
-                "fin": segmento['end'],
-                "texto": segmento['text'].strip()
-            })
+        if not ruta_audio:
+            print("Abortando transcripción por fallo en extracción de audio.")
+            return None
+
+        print("Audio extraído. Iniciando reconocimiento de voz (esto tomará un momento)...")
         
-        # Guardamos todo en un archivo JSON. Esto será la "comida" para el LLM (Ollama) en el paso 3.
-        with open(ruta_salida_json, 'w', encoding='utf-8') as archivo_json:
-            json.dump(segmentos, archivo_json, indent=4, ensure_ascii=False)
+        try:
+            # EL TRUCO: Leemos el WAV directamente a la RAM
+            audio_data, _ = sf.read(ruta_audio)
             
-        print(f"Transcripción completada con éxito. Datos guardados en {ruta_salida_json}")
+            # Whisper necesita que los datos sean de tipo float32
+            audio_data = audio_data.astype(np.float32)
+
+            # Le pasamos el audio ya procesado, así Whisper NO llama a su propio FFmpeg
+            resultado = self.modelo.transcribe(audio_data)
+            
+            segmentos = []
+            for segmento in resultado['segments']:
+                segmentos.append({
+                    "inicio": segmento['start'],
+                    "fin": segmento['end'],
+                    "texto": segmento['text'].strip()
+                })
+            
+            with open(ruta_salida_json, 'w', encoding='utf-8') as archivo_json:
+                json.dump(segmentos, archivo_json, indent=4, ensure_ascii=False)
+                
+            print(f"Transcripción completada con éxito. Datos guardados en {ruta_salida_json}")
+            
+        except Exception as e:
+            print(f"Error durante la transcripción: {e}")
+            
+        finally:
+            # Limpiamos la casa, pase lo que pase
+            if os.path.exists(ruta_audio):
+                os.remove(ruta_audio)
+            
         return segmentos
 
-# Bloque de ejecución principal
 if __name__ == "__main__":
-    # La ruta del video que descargaste en el paso anterior (Me at the zoo)
-    # Verifica que el archivo termine en .mp4. Si terminó en .webm u otro, cámbialo aquí.
-    ruta_archivo = "videos_completos/jNQXAC9IVRw.mp4" 
-    
+    ruta_archivo = "videos_completos/QkFwNr0lwaQ.mp4" 
     if os.path.exists(ruta_archivo):
-        mi_transcriptor = TranscriptorVideo(modelo_tamano="base")
+        mi_transcriptor = TranscriptorVideo()
         mi_transcriptor.transcribir(ruta_archivo)
-    else:
-        print(f"Error: No se encontró el archivo en {ruta_archivo}. Revisa el nombre o la extensión.")
