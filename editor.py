@@ -78,6 +78,8 @@ class EditorVideo:
                 "-ss", str(inicio),
                 "-to", str(fin),
                 "-vf", filtro,
+                "-c:a", "aac",    # OBLIGA a mantener y codificar el audio
+                "-b:a", "192k",   # Asegura buena calidad de sonido
                 archivo_salida
             ]
             
