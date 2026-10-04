@@ -35,7 +35,7 @@ def ejecutar_pipeline(url_video, api_key):
             json.dump(clips, f, indent=4, ensure_ascii=False)
             
         editor = EditorVideo()
-        editor.recortar_clips(ruta_video, ruta_cortes, ruta_transcripcion)
+        editor.recortar_clips(ruta_video, ruta_cortes, ruta_transcripcion, video_id)
     else:
         # Si la IA falla, detenemos el proceso con un mensaje claro
         print("\n[!] Proceso detenido: La IA no pudo generar los cortes sugeridos.")

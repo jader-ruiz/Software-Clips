@@ -20,16 +20,25 @@ class AnalizadorClips:
         print("Enviando transcripción a la nube para análisis... (tomará unos segundos)")
 
         prompt = f"""
-        Eres un Director de Contenido viral experto. Analiza la siguiente transcripción JSON.
-        
-        OBLIGATORIO: Extrae TODOS los momentos de alto impacto (polémicos, graciosos, debates o gran valor educativo) que existan en el video. 
-        - Si el video es largo, extrae la mayor cantidad posible.
-        - Cada momento debe durar entre 15 y 60 segundos.
-        
-        Devuelve ÚNICAMENTE un arreglo JSON válido.
+        Eres un Productor de TikTok experto y Director de Contenido para streamers de la categoría "Just Chatting" (Charlas/IRL). 
+        Tu único objetivo es analizar la siguiente transcripción JSON y extraer fragmentos que tengan un potencial viral masivo.
+
+        BUSCA ESPECÍFICAMENTE ESTOS 4 PATRONES (EL ORO DEL IRL):
+        1. El "Storytime" (Anécdotas): Historias personales locas, situaciones incómodas o bizarras que el streamer le cuenta al chat.
+        2. La Polémica (Hot Takes): El streamer dando una opinión fuerte, controversial o muy sincera sobre relaciones, dinero, sociedad u otros creadores.
+        3. El Remate (Comedia): Una respuesta rápida, sarcástica o inesperada a un comentario del chat que genere risa inmediata.
+        4. El "Real Talk" (Reflexión): Un consejo de vida duro, motivación genuina o un momento de vulnerabilidad.
+
+        REGLAS DE ORO PARA EL CORTE (RETENCIÓN):
+        - EL GANCHO (HOOK): El clip DEBE empezar en el milisegundo exacto de la acción. Elimina toda la basura introductoria (ej. "Eh, bueno chat, les iba a contar que...", "A ver..."). El primer segundo del clip debe ser una frase que obligue al espectador a quedarse (ej. "La peor cita de mi vida fue...").
+        - AUTOSUFICIENCIA: El clip debe tener sentido absoluto para alguien que jamás en su vida ha visto a este streamer. Si le falta contexto, no sirve.
+        - DURACIÓN: Entre 20 y 60 segundos. Ni un segundo de relleno al final. Corta justo después del "punchline" o la conclusión.
+        - EXHAUSTIVIDAD: Extrae la cantidad máxima de clips posibles que cumplan esta calidad premium.
+
+        Devuelve ÚNICAMENTE un arreglo JSON válido. No incluyas texto antes ni después. Estructura estricta:
         [
-            {{"titulo": "El_mejor_titulo_sin_espacios", "inicio": 10.5, "fin": 35.0}},
-            {{"titulo": "Otro_titulo_impactante", "inicio": 45.0, "fin": 75.5}}
+            {{"titulo": "Storytime_Loco", "inicio": 12.5, "fin": 45.0}},
+            {{"titulo": "Opinion_Fuerte_Dinero", "inicio": 120.0, "fin": 160.5}}
         ]
         
         Transcripción a analizar:
