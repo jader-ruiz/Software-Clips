@@ -1,52 +1,51 @@
-# Importamos las clases que construimos en los otros archivos
-from descargador import DescargadorVideo
-from transcriptor import TranscriptorVideo
-from analizador import AnalizadorClips
-from editor import EditorVideo
 import os
+import getpass
+from descargador import descargar_video
+from transcriptor import transcribir_video
+from analizador import analizar_con_gemini
+from editor import cortar_y_subtitular
 
-def ejecutar_pipeline(url_video, api_key):
-    print("=== INICIANDO PIPELINE DE CREACIÓN DE CLIPS CON IA ===")
+def procesar_stream():
+    print("="*50)
+    print("🤖 INICIANDO GANCHO AI 🤖")
+    print("="*50)
     
-    descargador = DescargadorVideo()
-    descargador.descargar(url_video)
-    
-    # Extraemos el ID para nombrar todo de forma única
-    video_id = url_video.split("v=")[1].split("&")[0]
-    ruta_video = f"videos_completos/{video_id}.mp4"
-    
-    # Nombres de archivo dinámicos basados en el ID del video
-    ruta_transcripcion = f"transcripcion_{video_id}.json"
-    ruta_cortes = f"cortes_{video_id}.json"
-    
-    if not os.path.exists(ruta_video):
-        print("Fallo crítico: No se encontró el video descargado.")
+    # 1. Pedir el link al usuario
+    url_video = input("\n🔗 Pega el link del video (YouTube o el .m3u8 de Kick) y presiona Enter:\n> ").strip()
+    if not url_video:
+        print("❌ No ingresaste ningún enlace. Cancelando ejecución.")
         return
 
-    transcriptor = TranscriptorVideo()
-    transcriptor.transcribir(ruta_video, ruta_transcripcion)
+    # 2. Pedir la API Key de forma segura (los caracteres no se verán en pantalla)
+    api_key = getpass.getpass("🔑 Pega tu API Key de Gemini y presiona Enter (el texto será invisible por seguridad):\n> ").strip()
+    if not api_key:
+        print("❌ Necesitas proporcionar una API Key para analizar el texto. Cancelando.")
+        return
+
+    # 3. Descargar el video
+    ruta_video = descargar_video(url_video)
+    if not ruta_video:
+        print("🛑 Deteniendo ejecución: No se pudo descargar el archivo.")
+        return
+
+    # 4. Transcribir el audio a texto
+    print("\n🎙️ Paso 1: Extrayendo y transcribiendo audio con Whisper...")
+    datos_transcripcion = transcribir_video(ruta_video)
+
+    # 5. Detectar ganchos con IA (Pasándole la API Key que el usuario escribió)
+    print("\n🧠 Paso 2: Gemini está buscando los mejores momentos (Storytimes, Polémicas)...")
+    momentos_virales = analizar_con_gemini(datos_transcripcion, api_key)
+
+    if not momentos_virales:
+        print("🛑 No se detectaron momentos virales o hubo un error con la IA.")
+        return
+
+    # 6. Cortar y generar los clips finales
+    print("\n✂️ Paso 3: Cortando y subtitulando clips...")
+    cortar_y_subtitular(ruta_video, momentos_virales)
     
-    analizador = AnalizadorClips(api_key)
-    # Guardamos los cortes con el nombre dinámico
-    clips = analizador.analizar_transcripcion(ruta_transcripcion)
-    if clips:
-        with open(ruta_cortes, 'w', encoding='utf-8') as f:
-            import json
-            json.dump(clips, f, indent=4, ensure_ascii=False)
-            
-        editor = EditorVideo()
-        editor.recortar_clips(ruta_video, ruta_cortes, ruta_transcripcion, video_id)
-    else:
-        # Si la IA falla, detenemos el proceso con un mensaje claro
-        print("\n[!] Proceso detenido: La IA no pudo generar los cortes sugeridos.")
-    
-    print("\n=== ¡PROCESO COMPLETADO! Revisa la carpeta 'clips_finales' ===")
+    print(f"\n🚀 ¡Proceso terminado! Revisa tu carpeta de clips finales.")
+    print(f"📁 El video original quedó guardado intacto en: {ruta_video}")
 
 if __name__ == "__main__":
-    url = input("Ingresa la URL del video de YouTube: ")
-    # Pedimos la llave secreta
-    llave = input("Ingresa tu API Key de Google Gemini: ")
-    
-    # IMPORTANTE: Asegúrate de actualizar la definición de la función arriba a:
-    # def ejecutar_pipeline(url_video, api_key):
-    ejecutar_pipeline(url, llave)
+    procesar_stream()
